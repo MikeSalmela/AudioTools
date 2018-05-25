@@ -1,3 +1,7 @@
+/*
+  Class for accessing data in a wav file
+*/
+
 #ifndef WAV_H
 #define WAV_H
 
@@ -12,7 +16,7 @@ class Wav{
 public:
   Wav();
   Wav(const string &filename);
-
+  // Reads the data in given file and saves the parsed data
   void read_data(const string &filename);
 
 private:
@@ -20,9 +24,8 @@ private:
   struct RIFF riff_;
   //the FMT wav header
   struct FMT fmt_;
-  //
+  //the SubChunk2 
   uint32_t SubChunk2ID_;
-  //
   uint32_t SubChunk2Size_;
   // the raw audio data
   vector<uint8_t> data_;
