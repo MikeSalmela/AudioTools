@@ -20,12 +20,14 @@ Wav::Wav(const string &filename){
 
 void Wav::read_data(const string &filename){
   string file = file_to_string(filename);
+  if(file == "ERROR") return;
   string::iterator it = file.begin();
   fillRIFF(it);
   fillFMT(it);
   SubChunk2ID_ = read_32bits(it, big_endian);
   SubChunk2Size_ = read_32bits(it, little_endian);
-  for(int i = 0; i < SubChunk2Size_; ++i){
+  for(int i = 0; i < SubChunk2Size_; ++i)
+  {
     data_.push_back(*it);
     ++it;
   }
@@ -94,7 +96,8 @@ uint16_t read_16bits(string::iterator &it, Endian endian){
 
 
 string file_to_string(const string &filename){
-  ifstream inputfile(filename);
+  ifstream inputfile("elvis.wav");
+  if(!inputfile) return "ERROR";
   string fullFile, line;
   while(getline(inputfile, line)){
     fullFile += line;

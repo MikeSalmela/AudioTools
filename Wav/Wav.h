@@ -24,11 +24,11 @@ private:
   struct RIFF riff_;
   //the FMT wav header
   struct FMT fmt_;
-  //the SubChunk2 
+  //the SubChunk2
   uint32_t SubChunk2ID_;
   uint32_t SubChunk2Size_;
   // the raw audio data
-  vector<uint8_t> data_;
+  vector<char> data_;
   // read the RIFF data and fill the struct
   void fillRIFF(string::iterator &it);
   // read the FMT data and fill the struct
