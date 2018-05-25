@@ -1,0 +1,104 @@
+#include "Wav.h"
+#include <iostream>
+
+//read 32 bits from the given string iterator
+//iterator will be moved 32 bits
+uint32_t read_32bits(string::iterator &it, Endian endian);
+//read 16 bits from the given string iterator
+//iterator will be moved 16 bits
+uint16_t read_16bits(string::iterator &it, Endian endian);
+
+string file_to_string(const string &filename);
+
+Wav::Wav(){
+
+}
+
+Wav::Wav(const string &filename){
+  read_data(filename);
+}
+
+void Wav::read_data(const string &filename){
+  string file = file_to_string(filename);
+  string::iterator it = file.begin();
+  fillRIFF(it);
+  fillFMT(it);
+  SubChunk2ID_ = read_32bits(it, big_endian);
+  SubChunk2Size_ = read_32bits(it, little_endian);
+  for(int i = 0; i < SubChunk2Size_; ++i){
+    data_.push_back(*it);
+    ++it;
+  }
+}
+
+//fills the riff with data starting from the string iterator
+void Wav::fillRIFF(string::iterator &it){
+  riff_.ChunkID = read_32bits(it, big_endian);
+  riff_.ChunkSize = read_32bits(it, little_endian);
+  riff_.Format = read_32bits(it, big_endian);
+}
+//fills the FMT data starting from the string iterator
+void Wav::fillFMT(string::iterator &it){
+  fmt_.SubChunk1ID = read_32bits(it, big_endian);
+  fmt_.SubChunk1Size = read_32bits(it, little_endian);
+  fmt_.AudioFormat = read_16bits(it, little_endian);
+  fmt_.NumChannels = read_16bits(it, little_endian);
+  fmt_.SampleRate = read_32bits(it, little_endian);
+  fmt_.ByteRate = read_32bits(it, little_endian);
+  fmt_.BlockAlign = read_16bits(it, little_endian);
+  fmt_.BitsPerSample = read_16bits(it, little_endian);
+}
+
+
+//read 32 bits from the given string iterator
+//iterator will be moved 32 bits
+uint32_t read_32bits(string::iterator &it, Endian endian){
+  // read the data in the iterator for 4 bytes (char)
+  uint8_t read_data[4];
+  for(int i = 0; i < 4; ++i){
+    read_data[i] = *it;
+    ++it;
+  }
+  uint32_t data = 0;
+  //Shift the bits to form a 32 bit variable
+  if(endian == little_endian){
+    data = ((read_data[0]) | read_data[1] << 8 |
+      read_data[2] << 16 | read_data[3] << 24);
+  }
+  else{
+    data = ((read_data[0] << 24) | read_data[1] << 16 |
+      read_data[2] << 8 | read_data[3]);
+  }
+  return data;
+
+}
+//read 16 bits from the given string iterator
+//iterator will be moved 16 bits
+uint16_t read_16bits(string::iterator &it, Endian endian){
+  // read the data in the iterator for 4 bytes (char)
+  uint8_t read_data[2];
+  for(int i = 0; i < 2; ++i){
+    read_data[i] = *it;
+    ++it;
+  }
+  uint32_t data = 0;
+  //Shift the bits to form a 16 bit variable
+  if(endian == little_endian){
+    data = ((read_data[0]) | read_data[1] << 8);
+  }
+  else{
+    data = (read_data[0] << 8 | read_data[1]);
+  }
+  return data;
+}
+
+
+string file_to_string(const string &filename){
+  ifstream inputfile(filename);
+  string fullFile, line;
+  while(getline(inputfile, line)){
+    fullFile += line;
+  }
+  return fullFile;
+
+}
