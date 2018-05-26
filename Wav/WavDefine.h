@@ -7,8 +7,13 @@
 
 #include <cstdint>
 
+// RIFF header should begin with this value
 #define RIFF_VALUE 0x52494646
+// the wanted value in the RIFF format slot
 #define WAV_VALUE 0x57415645
+// the Wav data portion should begin with this value
+#define WAV_DATA 0x64617461
+
 
 enum Endian{
   little_endian, big_endian
