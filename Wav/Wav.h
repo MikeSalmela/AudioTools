@@ -33,6 +33,8 @@ private:
   void fillRIFF(string::iterator &it);
   // read the FMT data and fill the struct
   void fillFMT(string::iterator &it);
+  // read all the data in a wav file starting from it iterator
+  void parse_data(string::iterator &it);
 
 };
 
