@@ -1,15 +1,12 @@
+/*
+  Class for accessing Wav audio data
+*/
+
+
 #include "Wav.h"
 #include <iostream>
 #include "../MyException.h"
 
-// read 32 bits from the given string iterator
-// iterator will be moved 32 bits
-uint32_t read_32bits(string::iterator &it, Endian endian);
-// read 16 bits from the given string iterator
-// iterator will be moved 16 bits
-uint16_t read_16bits(string::iterator &it, Endian endian);
-
-string file_to_string(const string &filename);
 
 Wav::Wav(){
 
@@ -27,7 +24,7 @@ void Wav::read_data(const string &filename){
     file = file_to_string(filename);
     string::iterator it = file.begin();
     // parse the header data
-    parse_data(it);
+    parse_data(it, file);
   }
   catch (MyException &e){
     cerr << e.get_msg() << endl;
@@ -57,12 +54,72 @@ void Wav::fillFMT(string::iterator &it){
   fmt_.BlockAlign = read_16bits(it, little_endian);
   fmt_.BitsPerSample = read_16bits(it, little_endian);
 
-  // if not PCM
-  if(fmt_.SubChunk1Size != 16){
-    throw(MyException("Subchunk1 not 16 bytes"));
+
+  if(fmt_.SubChunk1ID != FMT_VALUE){
+    throw( MyException("not FMT"));
   }
 }
 
+// Reads and saves the SubChunk2 data. Returns true when the ID is correct
+bool Wav::fillSubChunk2(string::iterator &it){
+  SubChunk2ID_ = read_32bits(it, big_endian);
+
+  // check ID
+  if(SubChunk2ID_ != DATA_VALUE) return false;
+
+  SubChunk2Size_ = read_32bits(it, little_endian);
+  for(int i = 0; i < SubChunk2Size_; ++i)
+  {
+    data_.push_back(*it);
+    ++it;
+  }
+  return true;
+
+
+}
+
+
+
+
+// Reads all the header information and fills Class variables
+void Wav::parse_data(string::iterator &it, string &data){
+
+  fillRIFF(it);
+  fillFMT(it);
+
+  // the Data ID is usually here, but if not, find it in the file
+  if(!fillSubChunk2(it)){
+    size_t foundAt = data.find("data");
+    it = data.begin();
+    for(size_t i = 0; i < foundAt; ++i){
+      ++it;
+    }
+    if(!fillSubChunk2(it)){
+      throw MyException("Data ID not found");
+    }
+  }
+
+}
+
+// Return the RAW data portion of the wav file
+vector<char> const Wav::get_RAW_data(){
+  return data_;
+}
+
+// Read the whole file into a string
+string file_to_string(const string &filename){
+  ifstream inputfile(filename);
+  if(!inputfile){
+    throw MyException("Invalid inputfile");
+  }
+  string fullFile, line;
+  while(getline(inputfile, line)){
+    fullFile += line;
+  }
+  inputfile.close();
+  return fullFile;
+
+}
 
 // read 32 bits from the given string iterator
 // iterator will be moved 32 bits
@@ -104,42 +161,4 @@ uint16_t read_16bits(string::iterator &it, Endian endian){
     data = (read_data[0] << 8 | read_data[1]);
   }
   return data;
-}
-
-
-// Reads all the header information and fills Class variables
-void Wav::parse_data(string::iterator &it){
-
-  fillRIFF(it);
-  fillFMT(it);
-  SubChunk2ID_ = read_32bits(it, big_endian);
-  SubChunk2Size_ = read_32bits(it, little_endian);
-  if(SubChunk2ID_ != WAV_DATA){
-    throw MyException("Subchunk2 not Wav");
-  }
-  for(int i = 0; i < SubChunk2Size_; ++i)
-  {
-    data_.push_back(*it);
-    ++it;
-  }
-}
-
-// Return the RAW data portion of the wav file
-vector<char> const Wav::get_RAW_data(){
-  return data_;
-}
-
-// Read the whole file into a string
-string file_to_string(const string &filename){
-  ifstream inputfile(filename);
-  if(!inputfile){
-    throw MyException("Invalid inputfile");
-  }
-  string fullFile, line;
-  while(getline(inputfile, line)){
-    fullFile += line;
-  }
-  inputfile.close();
-  return fullFile;
-
 }

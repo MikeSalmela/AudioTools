@@ -12,7 +12,9 @@
 // the wanted value in the RIFF format slot
 #define WAV_VALUE 0x57415645
 // the Wav data portion should begin with this value
-#define WAV_DATA 0x64617461
+#define DATA_VALUE 0x64617461
+//
+#define FMT_VALUE 0x666d7420
 
 
 enum Endian{

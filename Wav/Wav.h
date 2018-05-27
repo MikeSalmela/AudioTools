@@ -40,9 +40,22 @@ private:
   void fillRIFF(string::iterator &it);
   // read the FMT data with iterator and fill the struct. iterator will be moved
   void fillFMT(string::iterator &it);
+  // Fill the SubChunk2
+  bool fillSubChunk2(string::iterator &it);
   // read all the data in a wav file starting from the iterator. iterator will be moved
-  void parse_data(string::iterator &it);
+  void parse_data(string::iterator &it, string &data);
 
 };
+
+// read 32 bits from the given string iterator
+// iterator will be moved 32 bits
+uint32_t read_32bits(string::iterator &it, Endian endian);
+// read 16 bits from the given string iterator
+// iterator will be moved 16 bits
+uint16_t read_16bits(string::iterator &it, Endian endian);
+
+string file_to_string(const string &filename);
+
+
 
 #endif
