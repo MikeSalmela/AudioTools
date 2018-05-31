@@ -18,11 +18,26 @@ public:
   Wav();
   Wav(const string &filename);
 
+  // Change the raw data portion
+  void changeDATA(const vector<char> &newData);
+
+  // write a Wav file
+  void writeWAV(const string& fileName);
+
   // Reads the data in given file and saves the parsed data
   void read_data(const string &filename);
 
   // Return the RAW data portion of the wav file
   vector<char> const get_RAW_data();
+
+
+
+  //getter for the wav file
+  string getWAV();
+
+  // getters for WAV information
+  uint32_t get_sampleRate();
+  uint16_t get_channelCount();
 
 private:
   // the RIFF header
@@ -34,6 +49,11 @@ private:
   uint32_t SubChunk2Size_;  // length of the audio data
   // the raw audio data
   vector<char> data_;
+
+  // returns the RIFF as a string
+  string getRIFF();
+  // returns the FMT as a string
+  string getFMT();
 
 
   // read the RIFF data with iterator and fill the struct. iterator will be moved

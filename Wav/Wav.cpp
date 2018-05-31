@@ -7,6 +7,10 @@
 #include <iostream>
 #include "../MyException.h"
 
+string write16Bits(uint16_t in, Endian endian);
+string write32Bits(uint32_t in, Endian endian);
+
+
 
 Wav::Wav(){
 
@@ -14,6 +18,42 @@ Wav::Wav(){
 
 Wav::Wav(const string &filename){
   read_data(filename);
+}
+
+// Change the raw data portion
+void Wav::changeDATA(const vector<char> &newData){
+data_ = newData;
+}
+
+void Wav::writeWAV(const string& fileName){
+  ofstream outPutStream(fileName);
+  outPutStream << getWAV();
+
+}
+
+
+// getters for WAV information
+uint32_t Wav::get_sampleRate(){
+  return fmt_.SampleRate;
+}
+uint16_t Wav::get_channelCount(){
+  return fmt_.NumChannels;
+}
+
+
+
+
+string Wav::getWAV(){
+  string WAVFile;
+  WAVFile += getRIFF();
+  WAVFile += getFMT();
+  WAVFile += write32Bits(SubChunk2ID_, big_endian);
+  WAVFile += write32Bits(SubChunk2Size_, little_endian);
+  for(char c : data_){
+    WAVFile += c;
+  }
+
+  return WAVFile;
 }
 
 // Reads the given file and fills memeber variables acordingly
@@ -106,6 +146,31 @@ vector<char> const Wav::get_RAW_data(){
   return data_;
 }
 
+// Create a string from the Wav RIFF header
+string Wav::getRIFF(){
+  string RIFF;
+  RIFF += write32Bits(riff_.ChunkID, big_endian);
+  RIFF += write32Bits(riff_.ChunkSize, little_endian);
+  RIFF += write32Bits(riff_.Format, big_endian);
+
+  return RIFF;
+}
+
+// Create a string from the Wav FMT header
+string Wav::getFMT(){
+  string FMT;
+  FMT += write32Bits(fmt_.SubChunk1ID, big_endian);
+  FMT += write32Bits(fmt_.SubChunk1Size, little_endian);
+  FMT += write16Bits(fmt_.AudioFormat, little_endian);
+  FMT += write16Bits(fmt_.NumChannels, little_endian);
+  FMT += write32Bits(fmt_.SampleRate, little_endian);
+  FMT += write32Bits(fmt_.ByteRate, little_endian);
+  FMT += write16Bits(fmt_.BlockAlign, little_endian);
+  FMT += write16Bits(fmt_.BitsPerSample, little_endian);
+
+  return FMT;
+}
+
 // Read the whole file into a string
 string file_to_string(const string &filename){
   ifstream inputfile(filename);
@@ -161,4 +226,47 @@ uint16_t read_16bits(string::iterator &it, Endian endian){
     data = (read_data[0] << 8 | read_data[1]);
   }
   return data;
+}
+
+string write16Bits(uint16_t in, Endian endian){
+  uint8_t bytes[2];
+  string bitString16;
+
+  if(endian == big_endian){
+    bytes[0] = (in >> 8) & 0xFF;
+    bytes[1] = in & 0xFF;
+  }
+  else{
+    bytes[1] = (in >> 8) & 0xFF;
+    bytes[0] = in & 0xFF;
+  }
+
+  for(int i = 0; i < 2; ++i){
+    bitString16 += bytes[i];
+  }
+  return bitString16;
+}
+
+string write32Bits(uint32_t in, Endian endian){
+  unsigned char bytes[4];
+  string bitString32;
+
+  if(endian == big_endian)
+  {
+    bytes[0] = (in >> 24) & 0xFF;
+    bytes[1] = (in >> 16) & 0xFF;
+    bytes[2] = (in >> 8) & 0xFF;
+    bytes[3] = in & 0xFF;
+  }
+  else
+  {
+    bytes[3] = (in >> 24) & 0xFF;
+    bytes[2] = (in >> 16) & 0xFF;
+    bytes[1] = (in >> 8) & 0xFF;
+    bytes[0] = in & 0xFF;
+  }
+  for(int i = 0; i < 4; ++i){
+    bitString32 += bytes[i];
+  }
+  return bitString32;
 }
