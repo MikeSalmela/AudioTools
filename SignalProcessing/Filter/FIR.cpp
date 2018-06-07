@@ -1,5 +1,9 @@
 #include "FIR.h"
 #include <iostream>
+#include <cmath>
+
+#define PI 3.14159265
+
 
 FIR::FIR(){
   // FIR filter with 11 elements and cutoff at 0.25 for test purposes
@@ -22,4 +26,30 @@ vector<uint8_t> FIR::filter(vector<uint8_t> input_data){
     data.push_back((uint8_t) temp);
   }
   return data;
+}
+
+vector<float> FIR::designLowpass(int n, float fc){
+
+
+  vector<float> filter;
+  n = n/2;
+  float coefficent = 0;
+
+  for(int i = -n; i <= n; ++i){
+    if(i == 0){
+      coefficent = 2*fc;
+    }
+    else{
+      coefficent = 2*fc*sinc(i*2*fc);
+    }
+    filter.push_back(coefficent);
+  }
+  filterCoefficents_ = filter;
+  return filter;
+}
+
+
+// Normalized sinc function
+float sinc(float x){
+  return (sin(PI*x)/(PI*x));
 }
