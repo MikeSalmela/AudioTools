@@ -1,2 +1,2 @@
 make:
-	g++ main.cpp  Wav/Wav.cpp -o output
+	g++ main.cpp MyException.cpp  Wav/Wav.cpp SignalProcessing/Filter/FIR.cpp -o output
