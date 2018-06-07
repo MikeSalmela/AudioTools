@@ -1,15 +1,11 @@
 /*
-  Class for accessing Wav audio data
+  Class for manipulating Wav audio data
 */
 
 
 #include "Wav.h"
 #include <iostream>
 #include "../MyException.h"
-
-string write16Bits(uint16_t in, Endian endian);
-string write32Bits(uint32_t in, Endian endian);
-
 
 
 Wav::Wav(){
@@ -21,10 +17,11 @@ Wav::Wav(const string &filename){
 }
 
 // Change the raw data portion
-void Wav::changeDATA(const vector<char> &newData){
-data_ = newData;
+void Wav::changeDATA(const vector<uint8_t> &newData){
+  data_ = newData;
 }
 
+// Write a wav file from the Wav object
 void Wav::writeWAV(const string& fileName){
   ofstream outPutStream(fileName);
   outPutStream << getWAV();
@@ -49,7 +46,7 @@ string Wav::getWAV(){
   WAVFile += getFMT();
   WAVFile += write32Bits(SubChunk2ID_, big_endian);
   WAVFile += write32Bits(SubChunk2Size_, little_endian);
-  for(char c : data_){
+  for(uint8_t c : data_){
     WAVFile += c;
   }
 
@@ -142,7 +139,7 @@ void Wav::parse_data(string::iterator &it, string &data){
 }
 
 // Return the RAW data portion of the wav file
-vector<char> const Wav::get_RAW_data(){
+vector<uint8_t> const Wav::get_RAW_data(){
   return data_;
 }
 
@@ -189,7 +186,7 @@ string file_to_string(const string &filename){
 // read 32 bits from the given string iterator
 // iterator will be moved 32 bits
 uint32_t read_32bits(string::iterator &it, Endian endian){
-  // read the data in the iterator for 4 bytes (char)
+  // read the data in the iterator for 4 bytes (uint8_t)
   uint8_t read_data[4];
   for(int i = 0; i < 4; ++i){
     read_data[i] = *it;
@@ -211,7 +208,7 @@ uint32_t read_32bits(string::iterator &it, Endian endian){
 // read 16 bits from the given string iterator
 // iterator will be moved 16 bits
 uint16_t read_16bits(string::iterator &it, Endian endian){
-  // read the data in the iterator for 4 bytes (char)
+  // read the data in the iterator for 4 bytes (uint8_t)
   uint8_t read_data[2];
   for(int i = 0; i < 2; ++i){
     read_data[i] = *it;
@@ -248,7 +245,7 @@ string write16Bits(uint16_t in, Endian endian){
 }
 
 string write32Bits(uint32_t in, Endian endian){
-  unsigned char bytes[4];
+  uint8_t bytes[4];
   string bitString32;
 
   if(endian == big_endian)

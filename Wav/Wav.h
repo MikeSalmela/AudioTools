@@ -1,5 +1,5 @@
 /*
-  Class for accessing data in a wav file
+  Class for manipulating data in a wav file
 */
 
 #ifndef WAV_H
@@ -19,16 +19,16 @@ public:
   Wav(const string &filename);
 
   // Change the raw data portion
-  void changeDATA(const vector<char> &newData);
+  void changeDATA(const vector<uint8_t> &newData);
 
-  // write a Wav file
+  // Write a wav file from the Wav object
   void writeWAV(const string& fileName);
 
   // Reads the data in given file and saves the parsed data
   void read_data(const string &filename);
 
   // Return the RAW data portion of the wav file
-  vector<char> const get_RAW_data();
+  vector<uint8_t> const get_RAW_data();
 
 
 
@@ -48,7 +48,7 @@ private:
   uint32_t SubChunk2ID_;    // this should equal WAV_DATA
   uint32_t SubChunk2Size_;  // length of the audio data
   // the raw audio data
-  vector<char> data_;
+  vector<uint8_t> data_;
 
   // returns the RIFF as a string
   string getRIFF();
@@ -75,6 +75,8 @@ uint32_t read_32bits(string::iterator &it, Endian endian);
 uint16_t read_16bits(string::iterator &it, Endian endian);
 
 string file_to_string(const string &filename);
+string write16Bits(uint16_t in, Endian endian);
+string write32Bits(uint32_t in, Endian endian);
 
 
 
