@@ -5,47 +5,87 @@
 #define PI 3.14159265
 
 
-FIR::FIR(){
-  // FIR filter with 11 elements and cutoff at 0.25 for test purposes
-  filterCoefficents_ = { -0.0039,    0.0000,    0.0321,    0.1167,    0.2207,    0.2687,    0.2207,    0.1167,    0.0321,    0.0000,   -0.0039 };
+FIR::FIR(int n , float fc){
+
+  vector<float> filter = designLowpass(n, fc);
+  vector<float> window = designHamming(n);
+
+  for(size_t n = 0; n <= filter.size(); ++n){
+    impulseResponse_.push_back(filter[n]*window[n]);
+  }
 
 }
 
-vector<uint8_t> FIR::filter(vector<uint8_t> input_data){
-  vector<uint8_t> data;
+vector<int16_t> FIR::filter(const vector<int16_t> &input_data){
+  vector<int16_t> data(input_data.size());
 
+  //
   for(size_t n = 0; n < input_data.size(); ++n){
     float temp = 0;
-    for(size_t k = 0; k < filterCoefficents_.size(); ++k){
+    for(size_t k = 0; k < impulseResponse_.size(); ++k){
       if(n - k >= 0){
-          temp += (float) filterCoefficents_[k] * (float) input_data[n - k];
+          temp += impulseResponse_[k] * (float) input_data[n - k];
       }
     }
-    if(temp > 255) temp = 255;
-    if (temp < 0) temp = 0;
-    data.push_back((uint8_t) temp);
+    //if(temp > x) temp = 255;
+    //if (temp < 0) temp = 0;
+    data[n] = ((int16_t) temp);
   }
   return data;
 }
 
+
+vector<uint8_t> FIR::filter(const vector<uint8_t> &input_data){
+  vector<uint8_t> data(input_data.size());
+
+  //
+  for(size_t n = 0; n < input_data.size(); ++n){
+    float temp = 0;
+    for(size_t k = 0; k < impulseResponse_.size(); ++k){
+      if(n - k >= 0){
+          temp += impulseResponse_[k] * (float) input_data[n - k];
+      }
+    }
+    if(temp > 255) temp = 255;
+    if (temp < 0) temp = 0;
+    data[n] = ((uint8_t) temp);
+  }
+  return data;
+}
+
+// Returns the coefficents of a lowpass filter
 vector<float> FIR::designLowpass(int n, float fc){
 
+  vector<float> filter(n + 1);
 
-  vector<float> filter;
   n = n/2;
   float coefficent = 0;
+  int k = 0;
 
   for(int i = -n; i <= n; ++i){
-    if(i == 0){
-      coefficent = 2*fc;
-    }
-    else{
+    if(i != 0){
       coefficent = 2*fc*sinc(i*2*fc);
     }
-    filter.push_back(coefficent);
+    else{
+      coefficent = 2*fc;
+    }
+    filter[k] = coefficent;
+    ++k;
   }
-  filterCoefficents_ = filter;
   return filter;
+}
+
+
+  // Returns a Hamming window with n + 1 terms
+vector<float> FIR::designHamming(int n){
+    vector<float> Hamming(n + 1);
+    int k = 0;
+
+    for(int i = -n/2; i <= n/2; ++i){
+      ++k;
+      Hamming[k] = (0.5 + 0.5*cos((2*PI*i)/n));
+    }
+    return Hamming;
 }
 
 

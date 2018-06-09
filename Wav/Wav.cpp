@@ -84,12 +84,18 @@ void Wav::fillRIFF(string::iterator &it){
 void Wav::fillFMT(string::iterator &it){
   fmt_.SubChunk1ID = read_32bits(it, big_endian);
   fmt_.SubChunk1Size = read_32bits(it, little_endian);
+  fmt_.SubChunk1Size = 16;  // Skip extra chunks
   fmt_.AudioFormat = read_16bits(it, little_endian);
   fmt_.NumChannels = read_16bits(it, little_endian);
   fmt_.SampleRate = read_32bits(it, little_endian);
   fmt_.ByteRate = read_32bits(it, little_endian);
   fmt_.BlockAlign = read_16bits(it, little_endian);
   fmt_.BitsPerSample = read_16bits(it, little_endian);
+
+
+  if(fmt_.BitsPerSample != 8){
+      throw(MyException("Reading samples that aren't 8-bit not yet implemented"));
+  }
 
 
   if(fmt_.SubChunk1ID != FMT_VALUE){
@@ -131,6 +137,7 @@ void Wav::parse_data(string::iterator &it, string &data){
     for(size_t i = 0; i < foundAt; ++i){
       ++it;
     }
+    // Try agian
     if(!fillSubChunk2(it)){
       throw MyException("Data ID not found");
     }
