@@ -5,9 +5,9 @@
 #define PI 3.14159265
 
 
-FIR::FIR(int n , float fc){
+FIR::FIR(int n , float fc, FilterType type){
 
-  vector<float> filter = designLowpass(n, fc);
+  vector<float> filter = designFilter(n, fc, type);
   vector<float> window = designHamming(n);
 
   for(size_t n = 0; n <= filter.size(); ++n){
@@ -53,8 +53,8 @@ vector<uint8_t> FIR::filter(const vector<uint8_t> &input_data){
   return data;
 }
 
-// Returns the coefficents of a lowpass filter
-vector<float> FIR::designLowpass(int n, float fc){
+// Returns the coefficents of a filter
+vector<float> FIR::designFilter(int n, float fc, FilterType type){
 
   vector<float> filter(n + 1);
 
@@ -65,15 +65,22 @@ vector<float> FIR::designLowpass(int n, float fc){
   for(int i = -n; i <= n; ++i){
     if(i != 0){
       coefficent = 2*fc*sinc(i*2*fc);
+      if(type == HIGHPASS){
+        coefficent *= -1;
+      }
     }
     else{
       coefficent = 2*fc;
+      if(type == HIGHPASS){
+        coefficent = 1 - coefficent;
+      }
     }
     filter[k] = coefficent;
     ++k;
   }
   return filter;
 }
+
 
 
   // Returns a Hamming window with n + 1 terms
