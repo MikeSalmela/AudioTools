@@ -51,17 +51,20 @@ string Wav::getWAV(){
   string WAVFile;
   WAVFile += getRIFF();
   WAVFile += getFMT();
-  WAVFile += write32Bits(SubChunk2ID_, big_endian);
-  WAVFile += write32Bits(SubChunk2Size_, little_endian);
+  WAVFile += write_N_bits(SubChunk2ID_, big_endian, 4);
+  WAVFile += write_N_bits(SubChunk2Size_, little_endian, 4);
   if((fmt_.BitsPerSample == 8)){
     for(uint8_t c : data_){
       WAVFile += c;
     }
   }
-  else{
+  else if(fmt_.BitsPerSample == 16){
     for(int16_t c : data16bit_){
-      WAVFile += write16Bits(c, big_endian);
+      WAVFile += write_N_bits(c, big_endian, 2);
     }
+  }
+  else{
+    throw (MyException("samplerate not implemented"));
   }
 
   return WAVFile;
@@ -178,9 +181,9 @@ void Wav::read_16bit_sample(string::iterator &it)
 // Create a string from the Wav RIFF header
 string Wav::getRIFF(){
   string RIFF;
-  RIFF += write32Bits(riff_.ChunkID, big_endian);
-  RIFF += write32Bits(riff_.ChunkSize, little_endian);
-  RIFF += write32Bits(riff_.Format, big_endian);
+  RIFF += write_N_bits(riff_.ChunkID, big_endian, 4);
+  RIFF += write_N_bits(riff_.ChunkSize, little_endian, 4);
+  RIFF += write_N_bits(riff_.Format, big_endian, 4);
 
   return RIFF;
 }
@@ -188,14 +191,14 @@ string Wav::getRIFF(){
 // Create a string from the Wav FMT header
 string Wav::getFMT(){
   string FMT;
-  FMT += write32Bits(fmt_.SubChunk1ID, big_endian);
-  FMT += write32Bits(fmt_.SubChunk1Size, little_endian);
-  FMT += write16Bits(fmt_.AudioFormat, little_endian);
-  FMT += write16Bits(fmt_.NumChannels, little_endian);
-  FMT += write32Bits(fmt_.SampleRate, little_endian);
-  FMT += write32Bits(fmt_.ByteRate, little_endian);
-  FMT += write16Bits(fmt_.BlockAlign, little_endian);
-  FMT += write16Bits(fmt_.BitsPerSample, little_endian);
+  FMT += write_N_bits(fmt_.SubChunk1ID, big_endian, 4);
+  FMT += write_N_bits(fmt_.SubChunk1Size, little_endian, 4);
+  FMT += write_N_bits(fmt_.AudioFormat, little_endian, 2);
+  FMT += write_N_bits(fmt_.NumChannels, little_endian, 2);
+  FMT += write_N_bits(fmt_.SampleRate, little_endian, 4);
+  FMT += write_N_bits(fmt_.ByteRate, little_endian, 4);
+  FMT += write_N_bits(fmt_.BlockAlign, little_endian, 2);
+  FMT += write_N_bits(fmt_.BitsPerSample, little_endian, 2);
 
   return FMT;
 }
@@ -247,7 +250,7 @@ int16_t read_16bits(string::iterator &it, Endian endian){
     read_data[i] = *it;
     ++it;
   }
-  uint32_t data = 0;
+  int16_t data = 0;
   // Shift the bits to form a 16 bit variable
   if(endian == little_endian){
     data = ((read_data[0]) | read_data[1] << 8);
@@ -259,46 +262,23 @@ int16_t read_16bits(string::iterator &it, Endian endian){
 }
 
 // Returns a string with the in data written accordingly to the Endian
-string write16Bits(uint16_t in, Endian endian){
-  uint8_t bytes[2];
-  string bitString16;
+string write_N_bits(int32_t in, Endian endian, int n){
+  uint8_t bytes[n];
+  string bitString;
 
-  if(endian == big_endian){
-    bytes[0] = (in >> 8) & 0xFF;
-    bytes[1] = in & 0xFF;
+  if(endian == little_endian){
+    for(int i = 0; i < n; ++i){
+      bytes[i] = (in >> i*8) & 0xFF;
+    }
   }
   else{
-    bytes[1] = (in >> 8) & 0xFF;
-    bytes[0] = in & 0xFF;
+    for(int i = n; i > 0; --i){
+      bytes[n - i] = (in >> (i-1)*8) & 0xFF;
+    }
   }
 
-  for(int i = 0; i < 2; ++i){
-    bitString16 += bytes[i];
+  for(int i = 0; i < n; ++i){
+    bitString += bytes[i];
   }
-  return bitString16;
-}
-
-// Returns a string with the in data written accordingly to the Endian
-string write32Bits(uint32_t in, Endian endian){
-  uint8_t bytes[4];
-  string bitString32;
-
-  if(endian == big_endian)
-  {
-    bytes[0] = (in >> 24) & 0xFF;
-    bytes[1] = (in >> 16) & 0xFF;
-    bytes[2] = (in >> 8) & 0xFF;
-    bytes[3] = in & 0xFF;
-  }
-  else
-  {
-    bytes[3] = (in >> 24) & 0xFF;
-    bytes[2] = (in >> 16) & 0xFF;
-    bytes[1] = (in >> 8) & 0xFF;
-    bytes[0] = in & 0xFF;
-  }
-  for(int i = 0; i < 4; ++i){
-    bitString32 += bytes[i];
-  }
-  return bitString32;
+  return bitString;
 }

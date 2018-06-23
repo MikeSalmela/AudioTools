@@ -82,8 +82,7 @@ uint32_t read_32bits(string::iterator &it, Endian endian);
 int16_t read_16bits(string::iterator &it, Endian endian);
 
 string file_to_string(const string &filename);
-string write16Bits(uint16_t in, Endian endian);
-string write32Bits(uint32_t in, Endian endian);
+string write_N_bits(int32_t in, Endian endian, int n);
 
 
 
