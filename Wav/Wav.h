@@ -29,6 +29,7 @@ public:
 
   // Return the RAW data portion of the wav file
   vector<uint8_t> const get_RAW_data();
+  vector<int16_t> const get_16bit_data();
 
 
 
@@ -49,6 +50,7 @@ private:
   uint32_t SubChunk2Size_;  // length of the audio data
   // the raw audio data
   vector<uint8_t> data_;
+  vector<int16_t> data16bit_;
 
   // returns the RIFF as a string
   string getRIFF();
@@ -64,6 +66,11 @@ private:
   bool fillSubChunk2(string::iterator &it);
   // read all the data in a wav file starting from the iterator. iterator will be moved
   void parse_data(string::iterator &it, string &data);
+  //
+  void read_8bit_sample(string::iterator &it);
+  //
+  void read_16bit_sample(string::iterator &it);
+
 
 };
 
@@ -72,7 +79,7 @@ private:
 uint32_t read_32bits(string::iterator &it, Endian endian);
 // read 16 bits from the given string iterator
 // iterator will be moved 16 bits
-uint16_t read_16bits(string::iterator &it, Endian endian);
+int16_t read_16bits(string::iterator &it, Endian endian);
 
 string file_to_string(const string &filename);
 string write16Bits(uint16_t in, Endian endian);

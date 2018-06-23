@@ -36,18 +36,32 @@ uint32_t Wav::get_sampleRate(){
 uint16_t Wav::get_channelCount(){
   return fmt_.NumChannels;
 }
+// Return the RAW data portion of the wav file
+vector<uint8_t> const Wav::get_RAW_data(){
+  return data_;
+}
+vector<int16_t> const Wav::get_16bit_data(){
+  return data16bit_;
+}
 
 
 
-
+// Returns the wav file as a string
 string Wav::getWAV(){
   string WAVFile;
   WAVFile += getRIFF();
   WAVFile += getFMT();
   WAVFile += write32Bits(SubChunk2ID_, big_endian);
   WAVFile += write32Bits(SubChunk2Size_, little_endian);
-  for(uint8_t c : data_){
-    WAVFile += c;
+  if((fmt_.BitsPerSample == 8)){
+    for(uint8_t c : data_){
+      WAVFile += c;
+    }
+  }
+  else{
+    for(int16_t c : data16bit_){
+      WAVFile += write16Bits(c, big_endian);
+    }
   }
 
   return WAVFile;
@@ -84,7 +98,7 @@ void Wav::fillRIFF(string::iterator &it){
 void Wav::fillFMT(string::iterator &it){
   fmt_.SubChunk1ID = read_32bits(it, big_endian);
   fmt_.SubChunk1Size = read_32bits(it, little_endian);
-  fmt_.SubChunk1Size = 16;  // Skip extra chunks
+  //fmt_.SubChunk1Size = 16;  // Skip extra chunks
   fmt_.AudioFormat = read_16bits(it, little_endian);
   fmt_.NumChannels = read_16bits(it, little_endian);
   fmt_.SampleRate = read_32bits(it, little_endian);
@@ -93,36 +107,14 @@ void Wav::fillFMT(string::iterator &it){
   fmt_.BitsPerSample = read_16bits(it, little_endian);
 
 
-  if(fmt_.BitsPerSample != 8){
-      throw(MyException("Reading samples that aren't 8-bit not yet implemented"));
+  if(fmt_.NumChannels != 1){
+    throw(MyException("Stereo sound not supported"));
   }
-
 
   if(fmt_.SubChunk1ID != FMT_VALUE){
     throw( MyException("not FMT"));
   }
 }
-
-// Reads and saves the SubChunk2 data. Returns true when the ID is correct
-bool Wav::fillSubChunk2(string::iterator &it){
-  SubChunk2ID_ = read_32bits(it, big_endian);
-
-  // check ID
-  if(SubChunk2ID_ != DATA_VALUE) return false;
-
-  SubChunk2Size_ = read_32bits(it, little_endian);
-  for(int i = 0; i < SubChunk2Size_; ++i)
-  {
-    data_.push_back(*it);
-    ++it;
-  }
-  return true;
-
-
-}
-
-
-
 
 // Reads all the header information and fills Class variables
 void Wav::parse_data(string::iterator &it, string &data){
@@ -145,10 +137,43 @@ void Wav::parse_data(string::iterator &it, string &data){
 
 }
 
-// Return the RAW data portion of the wav file
-vector<uint8_t> const Wav::get_RAW_data(){
-  return data_;
+// Reads and saves the SubChunk2 data. Returns true when the ID is correct
+bool Wav::fillSubChunk2(string::iterator &it){
+  SubChunk2ID_ = read_32bits(it, big_endian);
+
+  // check ID
+  if(SubChunk2ID_ != DATA_VALUE) return false;
+  SubChunk2Size_ = read_32bits(it, little_endian);
+  if(fmt_.BitsPerSample == 8){
+    read_8bit_sample(it);
+  }
+  else{
+    read_16bit_sample(it);
+  }
+  return true;
+
+
 }
+
+void Wav::read_8bit_sample(string::iterator &it)
+{
+  for(int i = 0; i < SubChunk2Size_; ++i)
+  {
+    data_.push_back(*it);
+    ++it;
+  }
+}
+
+void Wav::read_16bit_sample(string::iterator &it)
+{
+  for(int i = 0; i < SubChunk2Size_/2; ++i){
+    data16bit_.push_back(read_16bits(it, big_endian));
+  }
+}
+
+
+
+
 
 // Create a string from the Wav RIFF header
 string Wav::getRIFF(){
@@ -179,6 +204,7 @@ string Wav::getFMT(){
 string file_to_string(const string &filename){
   ifstream inputfile(filename);
   if(!inputfile){
+    inputfile.close();
     throw MyException("Invalid inputfile");
   }
   string fullFile, line;
@@ -214,8 +240,8 @@ uint32_t read_32bits(string::iterator &it, Endian endian){
 }
 // read 16 bits from the given string iterator
 // iterator will be moved 16 bits
-uint16_t read_16bits(string::iterator &it, Endian endian){
-  // read the data in the iterator for 4 bytes (uint8_t)
+int16_t read_16bits(string::iterator &it, Endian endian){
+  // read the data in the iterator for 2 bytes
   uint8_t read_data[2];
   for(int i = 0; i < 2; ++i){
     read_data[i] = *it;
@@ -232,6 +258,7 @@ uint16_t read_16bits(string::iterator &it, Endian endian){
   return data;
 }
 
+// Returns a string with the in data written accordingly to the Endian
 string write16Bits(uint16_t in, Endian endian){
   uint8_t bytes[2];
   string bitString16;
@@ -251,6 +278,7 @@ string write16Bits(uint16_t in, Endian endian){
   return bitString16;
 }
 
+// Returns a string with the in data written accordingly to the Endian
 string write32Bits(uint32_t in, Endian endian){
   uint8_t bytes[4];
   string bitString32;
