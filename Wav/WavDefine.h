@@ -23,19 +23,19 @@ enum Endian{
 
 // the wav file begins with a RIFF header
 struct RIFF{
-  uint32_t ChunkID;   //big endian
-  uint32_t ChunkSize; //little endian
-  uint32_t Format;    //big endian
+  int32_t ChunkID;   //big endian
+  int32_t ChunkSize; //little endian
+  int32_t Format;    //big endian
 };
 
 // the wav file has information about the sound data in an FMT header
 struct FMT{
-  uint32_t SubChunk1ID;   //big endian
-  uint32_t SubChunk1Size; //little endian
-  uint16_t AudioFormat;   //little endian
-  uint16_t NumChannels;   //little endian
-  uint32_t SampleRate;    //little endian
-  uint32_t ByteRate;      //little endian
-  uint16_t BlockAlign;    //little endian
-  uint16_t BitsPerSample; //little endian
+  int32_t SubChunk1ID;   //big endian
+  int32_t SubChunk1Size; //little endian
+  int16_t AudioFormat;   //little endian
+  int16_t NumChannels;   //little endian
+  int32_t SampleRate;    //little endian
+  int32_t ByteRate;      //little endian
+  int16_t BlockAlign;    //little endian
+  int16_t BitsPerSample; //little endian
 };
