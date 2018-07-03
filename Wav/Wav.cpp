@@ -87,6 +87,22 @@ void Wav::fillFMT(ifstream& in){
 void Wav::fillSubChunk2(ifstream& in){
 
   read_ifsteam(in, SubChunk2ID_, big_endian);
+  if(SubChunk2ID_ != DATA_VALUE){
+    //TODO write a proper find data function!
+    char c = 0;
+    while(c != 'd'){
+      read_ifsteam(in, c);
+    }
+    read_ifsteam(in, c);
+    if(c != 'a'){
+      throw(MyException("Data not found!"));
+    }
+    for(int i = 0; i < 2; ++i){
+      read_ifsteam(in, c);
+    }
+
+  }
+
   read_ifsteam(in, SubChunk2Size_);
   parseRAWdata(in);
 
