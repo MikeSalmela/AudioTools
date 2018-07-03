@@ -39,7 +39,8 @@ private:
   int32_t SubChunk2ID_;    // this should equal WAV_DATA
   int32_t SubChunk2Size_;  // length of the audio data
   // the raw audio data
-  vector<float> data_;
+  vector<float> data1_; //Channel one
+  vector<float> data2_; //Channel two (if stereo)
 
   // Return the RAW data portion of the wav file
   vector<float> const get_RAW_data();
@@ -51,6 +52,12 @@ private:
   void fillFMT(ifstream& in);
   // Fill the SubChunk2
   void fillSubChunk2(ifstream& in);
+  // Fills the data_ vectors
+  template<typename T>
+  void fillRAWdata(ifstream& in, T variable);
+  void fillRAW8bitdata(ifstream& in);
+
+  void parseRAWdata(ifstream& in);
 
   template<typename T>
   void read_ifsteam(ifstream& in, T& variable, Endian endian = little_endian);

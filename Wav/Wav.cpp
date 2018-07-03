@@ -6,6 +6,7 @@
 #include "Wav.h"
 #include <iostream>
 #include <algorithm>
+#include <math.h>
 #include "../MyException.h"
 
 
@@ -19,7 +20,7 @@ Wav::Wav(const string &filename){
 
 // Change the raw data portion
 void Wav::changeDATA(const vector<float> &newData){
-  data_ = newData;
+  data1_ = newData;
 }
 
 // getters for WAV information
@@ -31,7 +32,7 @@ int16_t Wav::get_channelCount(){
 }
 // Return the RAW data portion of the wav file
 vector<float> const Wav::get_RAW_data(){
-  return data_;
+  return data1_;
 }
 
 
@@ -47,6 +48,7 @@ void Wav::read_file(const string &filename){
   catch (MyException &e){
     cerr << e.get_msg() << endl;
   }
+  file.close();
 }
 
 // fills the RIFF struct with data starting from the string iterator
@@ -86,12 +88,62 @@ void Wav::fillSubChunk2(ifstream& in){
 
   read_ifsteam(in, SubChunk2ID_, big_endian);
   read_ifsteam(in, SubChunk2Size_);
-  for(long i = 0;
-      i < ((SubChunk2Size_)*(fmt_.BitsPerSample)*(fmt_.NumChannels))/8; ++i){
-    char temp;
-    read_ifsteam(in, temp);
+  parseRAWdata(in);
+
+}
+
+// Reads the raw data from ifstream. Data is normalized between -1 and 1
+template<typename T>
+void Wav::fillRAWdata(ifstream& in, T variable){
+
+  ofstream out("values");
+  // calculates the value needed for the normalization
+  float f = pow(2, sizeof(variable)*8 - 1);
+  // b is needed for 8-bit data only. 8-bit samples are unsigned and
+  // need to be normalized differently to get values between -1 and 1
+  float b = 0;
+  if(sizeof(variable) == 1) b = 128;
+
+  // samples per channel
+  long samples = SubChunk2Size_/(sizeof(variable)*fmt_.NumChannels);
+
+  data1_.reserve(samples);
+  if(fmt_.NumChannels == 2){  // in case of stereo
+    data2_.reserve(samples);
   }
-  
+
+  for(long i = 0; i < samples; ++i){
+    read_ifsteam(in, variable);
+
+    data1_[i] = ((variable-b)/f);
+    out << data1_[i] << " , ";
+    if(fmt_.NumChannels == 2){
+      read_ifsteam(in, variable);
+      data2_[i] = ((variable-b)/f);
+    }
+  }
+  out.close();
+}
+
+// Selects the correct variable for the fillRAWdata function
+void Wav::parseRAWdata(ifstream& in){
+  switch (fmt_.BitsPerSample) {
+    case 8: {
+      uint8_t c = 0;
+      fillRAWdata(in, c);
+      break;
+    }
+    case 16: {
+      int16_t i = 0;
+      fillRAWdata(in, i);
+      break;
+    }
+    case 32:  {
+      int32_t i = 0;
+      fillRAWdata(in, i);
+      break;
+    }
+  }
 }
 
 
