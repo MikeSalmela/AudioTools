@@ -26,9 +26,13 @@ public:
   // Reads the data in given file and saves the parsed data
   void read_file(const string &filename);
 
+  // Write out the normalized audio data
+  void writeCSV(const string& filename, int channel = 1);
+
   // getters for WAV information
   int32_t get_sampleRate();
   int16_t get_channelCount();
+  vector<float> const get_RAW_data(int channel = 1);
 
 private:
   // the RIFF header
@@ -42,9 +46,6 @@ private:
   vector<float> data1_; //Channel one
   vector<float> data2_; //Channel two (if stereo)
 
-  // Return the RAW data portion of the wav file
-  vector<float> const get_RAW_data();
-
 
   // read the RIFF data with iterator and fill the struct. iterator will be moved
   void fillRIFF(ifstream &in);
@@ -55,12 +56,13 @@ private:
   // Fills the data_ vectors
   template<typename T>
   void fillRAWdata(ifstream& in, T variable);
-  void fillRAW8bitdata(ifstream& in);
-
   void parseRAWdata(ifstream& in);
 
+  void findDATA(ifstream& in);
+
+  // Fill the T variable with data from ifstream in
   template<typename T>
-  void read_ifsteam(ifstream& in, T& variable, Endian endian = little_endian);
+  ifstream& read_ifsteam(ifstream& in, T& variable, Endian endian = little_endian);
 
   string write_N_bits(int32_t in, Endian endian, int n);
 

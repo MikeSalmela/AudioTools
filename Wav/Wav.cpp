@@ -6,6 +6,7 @@
 #include "Wav.h"
 #include <iostream>
 #include <algorithm>
+#include <ctime>
 #include <math.h>
 #include "../MyException.h"
 
@@ -23,6 +24,22 @@ void Wav::changeDATA(const vector<float> &newData){
   data1_ = newData;
 }
 
+// Write a comma seperated value file of the audio data
+void Wav::writeCSV(const string& filename, int channel){
+  ofstream out(filename);
+  if(channel == 1){
+    for(float f : data1_){
+      out << f << " , ";
+    }
+  }
+  else{
+    for(float f : data2_){
+      out << f << " , ";
+    }
+  }
+  out.close();
+}
+
 // getters for WAV information
 int32_t Wav::get_sampleRate(){
   return fmt_.SampleRate;
@@ -30,9 +47,11 @@ int32_t Wav::get_sampleRate(){
 int16_t Wav::get_channelCount(){
   return fmt_.NumChannels;
 }
+
 // Return the RAW data portion of the wav file
-vector<float> const Wav::get_RAW_data(){
-  return data1_;
+vector<float> const Wav::get_RAW_data(int channel){
+  if(channel == 1)  return data1_;
+  else return data2_;
 }
 
 
@@ -88,19 +107,7 @@ void Wav::fillSubChunk2(ifstream& in){
 
   read_ifsteam(in, SubChunk2ID_, big_endian);
   if(SubChunk2ID_ != DATA_VALUE){
-    //TODO write a proper find data function!
-    char c = 0;
-    while(c != 'd'){
-      read_ifsteam(in, c);
-    }
-    read_ifsteam(in, c);
-    if(c != 'a'){
-      throw(MyException("Data not found!"));
-    }
-    for(int i = 0; i < 2; ++i){
-      read_ifsteam(in, c);
-    }
-
+    findDATA(in);
   }
 
   read_ifsteam(in, SubChunk2Size_);
@@ -112,33 +119,33 @@ void Wav::fillSubChunk2(ifstream& in){
 template<typename T>
 void Wav::fillRAWdata(ifstream& in, T variable){
 
-  ofstream out("values");
   // calculates the value needed for the normalization
   float f = pow(2, sizeof(variable)*8 - 1);
   // b is needed for 8-bit data only. 8-bit samples are unsigned and
   // need to be normalized differently to get values between -1 and 1
   float b = 0;
-  if(sizeof(variable) == 1) b = 128;
+  if(sizeof(variable) == 1) {
+    b = 128;
+  }
 
   // samples per channel
   long samples = SubChunk2Size_/(sizeof(variable)*fmt_.NumChannels);
 
-  data1_.reserve(samples);
+  data1_.resize(samples);
+
   if(fmt_.NumChannels == 2){  // in case of stereo
-    data2_.reserve(samples);
+    data2_.resize(samples);
   }
 
-  for(long i = 0; i < samples; ++i){
+  for(size_t i = 0; i < samples; ++i){
     read_ifsteam(in, variable);
-
     data1_[i] = ((variable-b)/f);
-    out << data1_[i] << " , ";
+
     if(fmt_.NumChannels == 2){
       read_ifsteam(in, variable);
       data2_[i] = ((variable-b)/f);
     }
   }
-  out.close();
 }
 
 // Selects the correct variable for the fillRAWdata function
@@ -165,7 +172,7 @@ void Wav::parseRAWdata(ifstream& in){
 
 // Fills the parameter variable with data from ifstream
 template<typename T>
-void Wav::read_ifsteam(ifstream& in, T& variable, Endian endian){
+ifstream& Wav::read_ifsteam(ifstream& in, T& variable, Endian endian){
   if(!in.read(reinterpret_cast<char*>(&variable), sizeof(T))){
     throw(MyException("Error reading the file"));
   }
@@ -177,6 +184,30 @@ void Wav::read_ifsteam(ifstream& in, T& variable, Endian endian){
   }
 }
 
+
+// Find the wav data
+void Wav::findDATA(ifstream& in){
+  char c = 0;
+  while(c != 'd'){
+    read_ifsteam(in, c);
+  }
+  read_ifsteam(in, c);
+  if(c != 'a'){
+    findDATA(in);
+    return;
+  }
+  read_ifsteam(in, c);
+  if(c != 't')  {
+    findDATA(in);
+    return;
+  }
+  read_ifsteam(in, c);
+  if(c != 'a')  {
+    findDATA(in);
+  }
+  SubChunk2ID_ = DATA_VALUE;
+
+}
 
 
 // Returns a string with the in data written accordingly to the Endian
