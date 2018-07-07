@@ -17,8 +17,7 @@ public:
   FIR(int n = 10, float fc = 0.25, FilterType type = LOWPASS);
 
   // filters and returns the given data
-  vector<uint8_t> filter(const vector<uint8_t> &input_data);
-  vector<int16_t> filter(const vector<int16_t> &input_data);
+  vector<float> filter(const vector<float> &input_data);
 
 
 private:

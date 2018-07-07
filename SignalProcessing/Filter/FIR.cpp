@@ -16,10 +16,10 @@ FIR::FIR(int n , float fc, FilterType type){
 
 }
 
-vector<int16_t> FIR::filter(const vector<int16_t> &input_data){
-  vector<int16_t> data(input_data.size());
-
-  //
+// Filters the input data with impulseResponse_ and returns the result
+vector<float> FIR::filter(const vector<float> &input_data){
+  vector<float> data(input_data.size());
+  // Convolude the data
   for(size_t n = 0; n < input_data.size(); ++n){
     float temp = 0;
     for(size_t k = 0; k < impulseResponse_.size(); ++k){
@@ -27,28 +27,7 @@ vector<int16_t> FIR::filter(const vector<int16_t> &input_data){
           temp += impulseResponse_[k] * (float) input_data[n - k];
       }
     }
-    //if(temp > x) temp = 255;
-    //if (temp < 0) temp = 0;
-    data[n] = ((int16_t) temp);
-  }
-  return data;
-}
-
-
-vector<uint8_t> FIR::filter(const vector<uint8_t> &input_data){
-  vector<uint8_t> data(input_data.size());
-
-  //
-  for(size_t n = 0; n < input_data.size(); ++n){
-    float temp = 0;
-    for(size_t k = 0; k < impulseResponse_.size(); ++k){
-      if(n - k >= 0){
-          temp += impulseResponse_[k] * (float) input_data[n - k];
-      }
-    }
-    if(temp > 255) temp = 255;
-    if (temp < 0) temp = 0;
-    data[n] = ((uint8_t) temp);
+    data[n] = temp;
   }
   return data;
 }
