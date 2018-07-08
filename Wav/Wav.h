@@ -29,6 +29,8 @@ public:
   // Write out the normalized audio data
   void writeCSV(const string& filename, int channel = 1);
 
+  void writeWAV(const string& filename, int bitsPerSample = 16);
+
   // getters for WAV information
   int32_t get_sampleRate();
   int16_t get_channelCount();
@@ -48,24 +50,29 @@ private:
 
 
   // read the RIFF data with iterator and fill the struct. iterator will be moved
-  void fillRIFF(ifstream &in);
+  void readRIFF(ifstream &in);
   // read the FMT data with iterator and fill the struct. iterator will be moved
-  void fillFMT(ifstream& in);
+  void readFMT(ifstream& in);
   // Fill the SubChunk2
-  void fillSubChunk2(ifstream& in);
+  void readSubChunk2(ifstream& in);
   // Fills the data_ vectors
   template<typename T>
   void fillRAWdata(ifstream& in, T variable);
   void parseRAWdata(ifstream& in);
-
   void findDATA(ifstream& in);
+
+  //  Methods for writing a wav file
+  void writeRIFF(ofstream& out);
+  void writeFMT(ofstream& out, int16_t bitsPerSample);
+  void writeSubChunk2(ofstream& out, int16_t bitsPerSample);
 
   // Fill the T variable with data from ifstream in
   template<typename T>
   ifstream& read_ifsteam(ifstream& in, T& variable, Endian endian = little_endian);
 
-  string write_N_bits(int32_t in, Endian endian, int n);
 
+  template<typename T>
+  ostream& write_ofsteam(ofstream& out, T& variable, Endian endian = little_endian);
 };
 
 

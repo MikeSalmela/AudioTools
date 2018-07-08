@@ -60,9 +60,9 @@ void Wav::read_file(const string &filename){
   // get the full file as a string
   ifstream file(filename, ios_base::binary);
   try{
-    fillRIFF(file);
-    fillFMT(file);
-    fillSubChunk2(file);
+    readRIFF(file);
+    readFMT(file);
+    readSubChunk2(file);
   }
   catch (MyException &e){
     cerr << e.get_msg() << endl;
@@ -70,8 +70,16 @@ void Wav::read_file(const string &filename){
   file.close();
 }
 
+void Wav::writeWAV(const string& filename, int bitsPerSample){
+  ofstream out(filename, ofstream::binary);
+  bitsPerSample = 16;
+  writeRIFF(out);
+  writeFMT(out, bitsPerSample);
+  writeSubChunk2(out, bitsPerSample);
+}
+
 // fills the RIFF struct with data starting from the string iterator
-void Wav::fillRIFF(ifstream& in){
+void Wav::readRIFF(ifstream& in){
 
   read_ifsteam(in, riff_.ChunkID, big_endian);
   read_ifsteam(in, riff_.ChunkSize);
@@ -83,9 +91,14 @@ void Wav::fillRIFF(ifstream& in){
   }
 }
 
+void Wav::writeRIFF(ofstream& out){
+  write_ofsteam(out, riff_.ChunkID, big_endian);
+  write_ofsteam(out, riff_.ChunkSize, big_endian);
+  write_ofsteam(out, riff_.Format, big_endian);
+}
 
 // fills the FMT struct with data starting from the string iterator
-void Wav::fillFMT(ifstream& in){
+void Wav::readFMT(ifstream& in){
 
   read_ifsteam(in, fmt_.SubChunk1ID, big_endian);
   read_ifsteam(in, fmt_.SubChunk1Size);
@@ -101,9 +114,22 @@ void Wav::fillFMT(ifstream& in){
   }
 }
 
+void Wav::writeFMT(ofstream& out, int16_t bitsPerSample){
+    write_ofsteam(out, fmt_.SubChunk1ID, big_endian);
+    fmt_.SubChunk1Size = 16;  //Skip extra chunks
+    write_ofsteam(out, fmt_.SubChunk1Size);
+    write_ofsteam(out, fmt_.AudioFormat);
+    write_ofsteam(out, fmt_.NumChannels);
+    fmt_.ByteRate = (fmt_.SampleRate*bitsPerSample*fmt_.NumChannels)/8;
+    write_ofsteam(out, fmt_.SampleRate);
+    write_ofsteam(out, fmt_.ByteRate);
+    fmt_.BlockAlign = (bitsPerSample* fmt_.NumChannels/8);
+    write_ofsteam(out, fmt_.BlockAlign);
+    write_ofsteam(out, bitsPerSample);
+}
 
 // Reads and saves the SubChunk2 data. Returns true when the ID is correct
-void Wav::fillSubChunk2(ifstream& in){
+void Wav::readSubChunk2(ifstream& in){
 
   read_ifsteam(in, SubChunk2ID_, big_endian);
   if(SubChunk2ID_ != DATA_VALUE){
@@ -113,6 +139,19 @@ void Wav::fillSubChunk2(ifstream& in){
   read_ifsteam(in, SubChunk2Size_);
   parseRAWdata(in);
 
+}
+
+void Wav::writeSubChunk2(ofstream& out, int16_t bitsPerSample){
+  write_ofsteam(out, SubChunk2ID_, big_endian);
+  SubChunk2Size_ = (data1_.size()*bitsPerSample*fmt_.NumChannels)/8;
+  write_ofsteam(out, SubChunk2Size_);
+  int t = 0;
+  if(fmt_.BitsPerSample == 8) t = 127;
+  long max_size = pow(2, bitsPerSample -1);
+  for(float f : data1_){
+    int16_t value = ((int16_t) (f*max_size + t));
+    write_ofsteam(out, value);
+  }
 }
 
 // Reads the raw data from ifstream. Data is normalized between -1 and 1
@@ -132,16 +171,16 @@ void Wav::fillRAWdata(ifstream& in, T variable){
   long samples = SubChunk2Size_/(sizeof(variable)*fmt_.NumChannels);
 
   data1_.resize(samples);
-
   if(fmt_.NumChannels == 2){  // in case of stereo
     data2_.resize(samples);
   }
 
+  // Do the normalization and save data in the vector
   for(size_t i = 0; i < samples; ++i){
     read_ifsteam(in, variable);
     data1_[i] = ((variable-b)/f);
 
-    if(fmt_.NumChannels == 2){
+    if(fmt_.NumChannels == 2){  // for stereo
       read_ifsteam(in, variable);
       data2_[i] = ((variable-b)/f);
     }
@@ -176,7 +215,6 @@ ifstream& Wav::read_ifsteam(ifstream& in, T& variable, Endian endian){
   if(!in.read(reinterpret_cast<char*>(&variable), sizeof(T))){
     throw(MyException("Error reading the file"));
   }
-
   // Reverse the bytes for big endian
   if(endian == big_endian){
     uint8_t *pvariable = reinterpret_cast<unsigned char*>(&variable);
@@ -184,6 +222,18 @@ ifstream& Wav::read_ifsteam(ifstream& in, T& variable, Endian endian){
   }
 }
 
+// Write the variable to the ofstream out
+template<typename T>
+ostream& Wav::write_ofsteam(ofstream& out, T& variable, Endian endian){
+  if(endian == big_endian){
+    uint8_t *pvariable = reinterpret_cast<unsigned char*>(&variable);
+    reverse(pvariable, pvariable + sizeof(T));
+  }
+
+  if(!out.write(reinterpret_cast<char*>(&variable), sizeof(T))){
+    throw(MyException("Error writing the file"));
+  }
+}
 
 // Find the wav data
 void Wav::findDATA(ifstream& in){
@@ -206,27 +256,4 @@ void Wav::findDATA(ifstream& in){
     findDATA(in);
   }
   SubChunk2ID_ = DATA_VALUE;
-
-}
-
-
-// Returns a string with the in data written accordingly to the Endian
-string write_N_bits(int32_t in, Endian endian, int n){
-  char bytes[n];
-  string bitString;
-
-  if(endian == little_endian){
-    for(int i = 0; i < n; ++i){
-      bytes[i] = (in >> i*8) & 0xFF;
-    }
-  }
-  else{
-    for(int i = n; i > 0; --i){
-      bytes[n - i] = (in >> (i-1)*8) & 0xFF;
-    }
-  }
-  for(int i = 0; i < n; ++i){
-    bitString += bytes[i];
-  }
-  return bitString;
 }
