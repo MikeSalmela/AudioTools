@@ -21,7 +21,7 @@ public:
   Wav(const string &filename);
 
   // Change the raw data portion
-  void changeDATA(const vector<float> &newData);
+  void changeDATA(vector<float> &&newData);
 
   // Reads the data in given file and saves the parsed data
   void read_file(const string &filename);
@@ -34,7 +34,7 @@ public:
   // getters for WAV information
   int32_t get_sampleRate();
   int16_t get_channelCount();
-  vector<float> const get_RAW_data(int channel = 1);
+  vector<float> get_RAW_data(int channel = 1) const;
 
 private:
   // the RIFF header

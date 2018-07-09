@@ -7,7 +7,7 @@ int main(){
 
 
 	Wav test = Wav("elvis.wav");
-	//FIR fir = FIR(1000, 0.1, HIGHPASS);
+	FIR fir = FIR(100, 0.1, HIGHPASS);
 
 	//test.changeDATA(fir.filter(test.get_RAW_data()));
 

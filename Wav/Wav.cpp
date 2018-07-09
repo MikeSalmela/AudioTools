@@ -20,7 +20,7 @@ Wav::Wav(const string &filename){
 }
 
 // Change the raw data portion
-void Wav::changeDATA(const vector<float> &newData){
+void Wav::changeDATA(vector<float> &&newData){
   data1_ = newData;
 }
 
@@ -28,12 +28,12 @@ void Wav::changeDATA(const vector<float> &newData){
 void Wav::writeCSV(const string& filename, int channel){
   ofstream out(filename);
   if(channel == 1){
-    for(float f : data1_){
+    for(const float &f : data1_){
       out << f << " , ";
     }
   }
   else{
-    for(float f : data2_){
+    for(const float &f : data2_){
       out << f << " , ";
     }
   }
@@ -49,7 +49,7 @@ int16_t Wav::get_channelCount(){
 }
 
 // Return the RAW data portion of the wav file
-vector<float> const Wav::get_RAW_data(int channel){
+vector<float> Wav::get_RAW_data(int channel) const{
   if(channel == 1)  return data1_;
   else return data2_;
 }
@@ -148,7 +148,7 @@ void Wav::writeSubChunk2(ofstream& out, int16_t bitsPerSample){
   int t = 0;
   if(fmt_.BitsPerSample == 8) t = 127;
   long max_size = pow(2, bitsPerSample -1);
-  for(float f : data1_){
+  for(const float &f : data1_){
     int16_t value = ((int16_t) (f*max_size + t));
     write_ofsteam(out, value);
   }

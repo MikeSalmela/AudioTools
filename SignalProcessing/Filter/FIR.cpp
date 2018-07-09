@@ -10,8 +10,10 @@ FIR::FIR(int n , float fc, FilterType type){
   vector<float> filter = designFilter(n, fc, type);
   vector<float> window = designHamming(n);
 
-  for(size_t n = 0; n <= filter.size(); ++n){
-    impulseResponse_.push_back(filter[n]*window[n]);
+  impulseResponse_.resize(filter.size());
+
+  for(size_t i = 0; i < filter.size(); ++i){
+    impulseResponse_[i] = (filter[i]*window[i]);
   }
 
 }
@@ -68,8 +70,8 @@ vector<float> FIR::designHamming(int n){
     int k = 0;
 
     for(int i = -n/2; i <= n/2; ++i){
-      ++k;
       Hamming[k] = (0.5 + 0.5*cos((2*PI*i)/n));
+      ++k;
     }
     return Hamming;
 }
