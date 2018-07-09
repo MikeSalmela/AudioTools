@@ -21,11 +21,12 @@ FIR::FIR(int n , float fc, FilterType type){
 // Filters the input data with impulseResponse_ and returns the result
 vector<float> FIR::filter(const vector<float> &input_data){
   vector<float> data(input_data.size());
+
   // Convolude the data
   for(size_t n = 0; n < input_data.size(); ++n){
     float temp = 0;
     for(size_t k = 0; k < impulseResponse_.size(); ++k){
-      if(n - k >= 0){
+      if(n - k >= 0 && n - k < input_data.size()){
           temp += impulseResponse_[k] * (float) input_data[n - k];
       }
     }
