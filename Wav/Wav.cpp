@@ -15,18 +15,27 @@ Wav::Wav(){
 
 }
 
-Wav::Wav(const string &filename){
+Wav::Wav(const std::string &filename){
   read_file(filename);
 }
 
+Wav::Wav(const std::vector<float> &data, int16_t sampleRate){
+  data1_ = data;
+  riff_ = {RIFF_VALUE, 0, WAV_VALUE};
+  fmt_ = {FMT_VALUE, 16, 1, 1, sampleRate, sampleRate*2, 2, 16};
+  SubChunk2ID_ = DATA_VALUE;
+  SubChunk2Size_ = data.size();
+
+}
+
 // Change the raw data portion
-void Wav::changeDATA(vector<float> &&newData){
+void Wav::changeDATA(std::vector<float> &&newData){
   data1_ = newData;
 }
 
 // Write a comma seperated value file of the audio data
-void Wav::writeCSV(const string& filename, int channel){
-  ofstream out(filename);
+void Wav::writeCSV(const std::string& filename, int channel){
+  std::ofstream out(filename);
   if(channel == 1){
     for(const float &f : data1_){
       out << f << " , ";
@@ -49,16 +58,16 @@ int16_t Wav::get_channelCount(){
 }
 
 // Return the RAW data portion of the wav file
-vector<float> Wav::get_RAW_data(int channel) const{
+std::vector<float> Wav::get_RAW_data(int channel) const{
   if(channel == 1)  return data1_;
   else return data2_;
 }
 
 
 // Reads the given file and fills memeber variables acordingly
-void Wav::read_file(const string &filename){
+void Wav::read_file(const std::string &filename){
   // get the full file as a string
-  ifstream file(filename, ios_base::binary);
+  std::ifstream file(filename, ios_base::binary);
   try{
     readRIFF(file);
     readFMT(file);
@@ -70,8 +79,8 @@ void Wav::read_file(const string &filename){
   file.close();
 }
 
-void Wav::writeWAV(const string& filename, int bitsPerSample){
-  ofstream out(filename, ofstream::binary);
+void Wav::writeWAV(const std::string& filename, int bitsPerSample){
+  std::ofstream out(filename, std::ofstream::binary);
   bitsPerSample = 16;
   writeRIFF(out);
   writeFMT(out, bitsPerSample);
@@ -79,7 +88,7 @@ void Wav::writeWAV(const string& filename, int bitsPerSample){
 }
 
 // fills the RIFF struct with data starting from the string iterator
-void Wav::readRIFF(ifstream& in){
+void Wav::readRIFF(std::ifstream& in){
 
   read_ifsteam(in, riff_.ChunkID, big_endian);
   read_ifsteam(in, riff_.ChunkSize);
@@ -91,14 +100,14 @@ void Wav::readRIFF(ifstream& in){
   }
 }
 
-void Wav::writeRIFF(ofstream& out){
+void Wav::writeRIFF(std::ofstream& out){
   write_ofsteam(out, riff_.ChunkID, big_endian);
   write_ofsteam(out, riff_.ChunkSize, big_endian);
   write_ofsteam(out, riff_.Format, big_endian);
 }
 
 // fills the FMT struct with data starting from the string iterator
-void Wav::readFMT(ifstream& in){
+void Wav::readFMT(std::ifstream& in){
 
   read_ifsteam(in, fmt_.SubChunk1ID, big_endian);
   read_ifsteam(in, fmt_.SubChunk1Size);
@@ -114,7 +123,7 @@ void Wav::readFMT(ifstream& in){
   }
 }
 
-void Wav::writeFMT(ofstream& out, int16_t bitsPerSample){
+void Wav::writeFMT(std::ofstream& out, int16_t bitsPerSample){
     write_ofsteam(out, fmt_.SubChunk1ID, big_endian);
     fmt_.SubChunk1Size = 16;  //Skip extra chunks
     write_ofsteam(out, fmt_.SubChunk1Size);
@@ -129,7 +138,7 @@ void Wav::writeFMT(ofstream& out, int16_t bitsPerSample){
 }
 
 // Reads and saves the SubChunk2 data. Returns true when the ID is correct
-void Wav::readSubChunk2(ifstream& in){
+void Wav::readSubChunk2(std::ifstream& in){
 
   read_ifsteam(in, SubChunk2ID_, big_endian);
   if(SubChunk2ID_ != DATA_VALUE){
@@ -141,7 +150,7 @@ void Wav::readSubChunk2(ifstream& in){
 
 }
 
-void Wav::writeSubChunk2(ofstream& out, int16_t bitsPerSample){
+void Wav::writeSubChunk2(std::ofstream& out, int16_t bitsPerSample){
   write_ofsteam(out, SubChunk2ID_, big_endian);
   SubChunk2Size_ = (data1_.size()*bitsPerSample*fmt_.NumChannels)/8;
   write_ofsteam(out, SubChunk2Size_);
@@ -154,9 +163,9 @@ void Wav::writeSubChunk2(ofstream& out, int16_t bitsPerSample){
   }
 }
 
-// Reads the raw data from ifstream. Data is normalized between -1 and 1
+// Reads the raw data from std::ifstream. Data is normalized between -1 and 1
 template<typename T>
-void Wav::fillRAWdata(ifstream& in, T variable){
+void Wav::fillRAWdata(std::ifstream& in, T variable){
 
   // calculates the value needed for the normalization
   float f = pow(2, sizeof(variable)*8 - 1);
@@ -188,7 +197,7 @@ void Wav::fillRAWdata(ifstream& in, T variable){
 }
 
 // Selects the correct variable for the fillRAWdata function
-void Wav::parseRAWdata(ifstream& in){
+void Wav::parseRAWdata(std::ifstream& in){
   switch (fmt_.BitsPerSample) {
     case 8: {
       uint8_t c = 0;
@@ -209,9 +218,9 @@ void Wav::parseRAWdata(ifstream& in){
 }
 
 
-// Fills the parameter variable with data from ifstream
+// Fills the parameter variable with data from std::ifstream
 template<typename T>
-ifstream& Wav::read_ifsteam(ifstream& in, T& variable, Endian endian){
+std::ifstream& Wav::read_ifsteam(std::ifstream& in, T& variable, Endian endian){
   if(!in.read(reinterpret_cast<char*>(&variable), sizeof(T))){
     throw(MyException("Error reading the file"));
   }
@@ -224,7 +233,7 @@ ifstream& Wav::read_ifsteam(ifstream& in, T& variable, Endian endian){
 
 // Write the variable to the ofstream out
 template<typename T>
-ostream& Wav::write_ofsteam(ofstream& out, T& variable, Endian endian){
+std::ostream& Wav::write_ofsteam(std::ofstream& out, T& variable, Endian endian){
   if(endian == big_endian){
     uint8_t *pvariable = reinterpret_cast<unsigned char*>(&variable);
     reverse(pvariable, pvariable + sizeof(T));
@@ -235,8 +244,9 @@ ostream& Wav::write_ofsteam(ofstream& out, T& variable, Endian endian){
   }
 }
 
+
 // Find the wav data
-void Wav::findDATA(ifstream& in){
+void Wav::findDATA(std::ifstream& in){
   char c = 0;
   while(c != 'd'){
     read_ifsteam(in, c);
