@@ -4,8 +4,6 @@
 #include <string>
 #include <vector>
 
-using namespace std;
-
 enum FilterType{
   LOWPASS, HIGHPASS
 };
@@ -17,19 +15,19 @@ public:
   FIR(int n = 10, float fc = 0.25, FilterType type = LOWPASS);
 
   // filters and returns the given data
-  vector<float> filter(const vector<float> &input_data);
+  std::vector<float> filter(const std::vector<float> &input_data);
 
 
 private:
   // Coefficents for this FIR filter
-  vector<float> impulseResponse_;
+  std::vector<float> impulseResponse_;
 
   // Returns the coefficents of a wanted filter
-  vector<float> designFilter(int n, float fc, FilterType type = LOWPASS);
+  std::vector<float> designFilter(int n, float fc, FilterType type = LOWPASS);
 
 
   // Returns a Hamming window with n + 1 terms
-  vector<float> designHamming(int n);
+  std::vector<float> designHamming(int n);
 
 
 };

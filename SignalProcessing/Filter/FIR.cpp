@@ -2,13 +2,13 @@
 #include <iostream>
 #include <cmath>
 
-#define PI 3.14159265
+const double PI = 3.14159265;
 
 
 FIR::FIR(int n , float fc, FilterType type){
 
-  vector<float> filter = designFilter(n, fc, type);
-  vector<float> window = designHamming(n);
+  std::vector<float> filter = designFilter(n, fc, type);
+  std::vector<float> window = designHamming(n);
 
   impulseResponse_.resize(filter.size());
 
@@ -19,8 +19,8 @@ FIR::FIR(int n , float fc, FilterType type){
 }
 
 // Filters the input data with impulseResponse_ and returns the result
-vector<float> FIR::filter(const vector<float> &input_data){
-  vector<float> data(input_data.size());
+std::vector<float> FIR::filter(const std::vector<float> &input_data){
+  std::vector<float> data(input_data.size());
 
   // Convolude the data
   for(size_t n = 0; n < input_data.size(); ++n){
@@ -36,9 +36,9 @@ vector<float> FIR::filter(const vector<float> &input_data){
 }
 
 // Returns the coefficents of a filter
-vector<float> FIR::designFilter(int n, float fc, FilterType type){
+std::vector<float> FIR::designFilter(int n, float fc, FilterType type){
 
-  vector<float> filter(n + 1);
+  std::vector<float> filter(n + 1);
 
   n = n/2;
   float coefficent = 0;
@@ -66,8 +66,8 @@ vector<float> FIR::designFilter(int n, float fc, FilterType type){
 
 
   // Returns a Hamming window with n + 1 terms
-vector<float> FIR::designHamming(int n){
-    vector<float> Hamming(n + 1);
+std::vector<float> FIR::designHamming(int n){
+    std::vector<float> Hamming(n + 1);
     int k = 0;
 
     for(int i = -n/2; i <= n/2; ++i){
