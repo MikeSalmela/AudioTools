@@ -19,7 +19,7 @@ Wav::Wav(const std::string &filename){
   read_file(filename);
 }
 
-Wav::Wav(const std::vector<float> &data, int16_t sampleRate){
+Wav::Wav(const std::vector<float> &data, int32_t sampleRate){
   data1_ = data;
   riff_ = {RIFF_VALUE, 0, WAV_VALUE};
   fmt_ = {FMT_VALUE, 16, 1, 1, sampleRate, sampleRate*2, 2, 16};

@@ -19,7 +19,7 @@ public:
   Wav();
   Wav(const std::string &filename);
   // Create a wav object with given data
-  Wav(const std::vector<float> &data, int16_t sampleRate);
+  Wav(const std::vector<float> &data, int32_t sampleRate);
 
   // Change the raw data portion
   void changeDATA(std::vector<float> &&newData);
