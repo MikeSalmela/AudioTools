@@ -5,7 +5,7 @@
 #include <vector>
 
 //Returns a vector with raw data sine wave.
-std::vector<float> makeSine(int frequency, int sampleRate, int length);
+std::vector<float> makeSine(float frequency, float sampleRate, int length);
 
 
 
