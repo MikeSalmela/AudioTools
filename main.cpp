@@ -10,7 +10,7 @@ int main(){
 
 	//Wav test = Wav("seiska.wav");
 	makeSine(5000, 20000, 100000);
-	Wav test2(makeSine(5000, 50000, 2000), 50000);
+	Wav test2(makeSine(5000, 50000, 20000), 50000);
 	test2.writeWAV("test2.wav");
 	//test.changeDATA(fir.filter(test.get_RAW_data()));
 
